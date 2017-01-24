@@ -16,6 +16,7 @@ import android.util.Log;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
@@ -31,10 +32,13 @@ public class MyUploadService extends MyBaseTaskService {
     public static final String ACTION_UPLOAD = "action_upload";
     public static final String UPLOAD_COMPLETED = "upload_completed";
     public static final String UPLOAD_ERROR = "upload_error";
+    public static final String UPLOAD_PROGRESS = "upload_progress";
 
     /** Intent Extras **/
     public static final String EXTRA_FILE_URI = "extra_file_uri";
     public static final String EXTRA_DOWNLOAD_URL = "extra_download_url";
+    public static final String EXTRA_BYTES_UPLOADED = "extra_bytes_uploaded";
+    public static final String EXTRA_TOTAL_BYTES = "extra_total_bytes";
 
     // [START declare_ref]
     private StorageReference mStorageRef;
@@ -83,7 +87,17 @@ public class MyUploadService extends MyBaseTaskService {
 
         // Upload file to Firebase Storage
         Log.d(TAG, "uploadFromUri:dst:" + photoRef.getPath());
-        photoRef.putFile(fileUri)
+        photoRef.putFile(fileUri).
+                addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                        Intent broadcast = new Intent(UPLOAD_PROGRESS)
+                                .putExtra(EXTRA_BYTES_UPLOADED, taskSnapshot.getBytesTransferred())
+                                .putExtra(EXTRA_TOTAL_BYTES, taskSnapshot.getTotalByteCount());
+                        LocalBroadcastManager.getInstance(getApplicationContext())
+                                .sendBroadcast(broadcast);
+                    }
+                })
                 .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
@@ -186,6 +200,7 @@ public class MyUploadService extends MyBaseTaskService {
         IntentFilter filter = new IntentFilter();
         filter.addAction(UPLOAD_COMPLETED);
         filter.addAction(UPLOAD_ERROR);
+        filter.addAction(UPLOAD_PROGRESS);
 
         return filter;
     }

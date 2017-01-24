@@ -44,10 +44,12 @@ public class MyDownloadService extends MyBaseTaskService {
     public static final String ACTION_DOWNLOAD = "action_download";
     public static final String DOWNLOAD_COMPLETED = "download_completed";
     public static final String DOWNLOAD_ERROR = "download_error";
+    public static final String DOWNLOAD_PROGRESS = "download_progress";
 
     /** Extras **/
     public static final String EXTRA_DOWNLOAD_PATH = "extra_download_path";
     public static final String EXTRA_BYTES_DOWNLOADED = "extra_bytes_downloaded";
+    public static final String EXTRA_TOTAL_BYTES = "extra_total_bytes";
 
     private StorageReference mStorageRef;
 
@@ -90,6 +92,21 @@ public class MyDownloadService extends MyBaseTaskService {
                     @Override
                     public void doInBackground(StreamDownloadTask.TaskSnapshot taskSnapshot,
                                                InputStream inputStream) throws IOException {
+                        Intent broadcast = new Intent(DOWNLOAD_PROGRESS);
+                        long totalBytes = taskSnapshot.getTotalByteCount();
+                        long bytesDownloaded = 0;
+
+                        byte[] buffer = new byte[256];
+                        int size;
+
+                        while ((size = inputStream.read(buffer)) != -1) {
+                            bytesDownloaded += size;
+                            broadcast.putExtra(EXTRA_TOTAL_BYTES, totalBytes);
+                            broadcast.putExtra(EXTRA_BYTES_DOWNLOADED, bytesDownloaded);
+                            LocalBroadcastManager.getInstance(getApplicationContext())
+                                    .sendBroadcast(broadcast);
+                        }
+
                         // Close the stream at the end of the Task
                         inputStream.close();
                     }
@@ -131,6 +148,7 @@ public class MyDownloadService extends MyBaseTaskService {
         IntentFilter filter = new IntentFilter();
         filter.addAction(DOWNLOAD_COMPLETED);
         filter.addAction(DOWNLOAD_ERROR);
+        filter.addAction(DOWNLOAD_PROGRESS);
 
         return filter;
     }

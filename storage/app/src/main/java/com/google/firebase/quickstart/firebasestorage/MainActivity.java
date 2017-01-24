@@ -30,6 +30,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -88,24 +89,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onReceive(Context context, Intent intent) {
                 Log.d(TAG, "onReceive:" + intent);
-                hideProgressDialog();
 
                 switch (intent.getAction()) {
+                    case MyDownloadService.DOWNLOAD_PROGRESS:
+                        // Update download progress
+                        long bytesDownloaded = intent.getLongExtra(MyDownloadService.EXTRA_BYTES_DOWNLOADED, 0);
+                        long totalBytes = intent.getLongExtra(MyDownloadService.EXTRA_TOTAL_BYTES, 0);
+                        updateProgressDialog((int) bytesDownloaded, (int)totalBytes);
+                        break;
                     case MyDownloadService.DOWNLOAD_COMPLETED:
                         // Get number of bytes downloaded
-                        long numBytes = intent.getLongExtra(MyDownloadService.EXTRA_BYTES_DOWNLOADED, 0);
-
+                        bytesDownloaded = intent.getLongExtra(MyDownloadService.EXTRA_BYTES_DOWNLOADED, 0);
                         // Alert success
                         showMessageDialog(getString(R.string.success), String.format(Locale.getDefault(),
                                 "%d bytes downloaded from %s",
-                                numBytes,
+                                bytesDownloaded,
                                 intent.getStringExtra(MyDownloadService.EXTRA_DOWNLOAD_PATH)));
+                        hideProgressDialog();
                         break;
                     case MyDownloadService.DOWNLOAD_ERROR:
                         // Alert failure
                         showMessageDialog("Error", String.format(Locale.getDefault(),
                                 "Failed to download from %s",
                                 intent.getStringExtra(MyDownloadService.EXTRA_DOWNLOAD_PATH)));
+                        break;
+                    case MyUploadService.UPLOAD_PROGRESS:
+                        // Update upload progress
+                        long bytesUploaded = intent.getLongExtra(MyUploadService.EXTRA_BYTES_UPLOADED, 0);
+                        totalBytes = intent.getLongExtra(MyUploadService.EXTRA_TOTAL_BYTES, 0);
+                        updateProgressDialog((int) bytesUploaded, (int)totalBytes);
                         break;
                     case MyUploadService.UPLOAD_COMPLETED:
                     case MyUploadService.UPLOAD_ERROR:
@@ -188,6 +200,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         startService(new Intent(this, MyUploadService.class)
                 .putExtra(MyUploadService.EXTRA_FILE_URI, fileUri)
                 .setAction(MyUploadService.ACTION_UPLOAD));
+
+        // Show loading spinner
+        showProgressDialog("Uploading...");
     }
 
     private void beginDownload() {
@@ -201,7 +216,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         startService(intent);
 
         // Show loading spinner
-        showProgressDialog();
+        showProgressDialog("Downloading...");
     }
 
     private void launchCamera() {
@@ -215,7 +230,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void signInAnonymously() {
         // Sign in anonymously. Authentication is required to read or write from Firebase Storage.
-        showProgressDialog();
+        showProgressDialog("Signing in...");
         mAuth.signInAnonymously()
                 .addOnSuccessListener(this, new OnSuccessListener<AuthResult>() {
                     @Override
@@ -241,6 +256,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mFileUri = intent.getParcelableExtra(MyUploadService.EXTRA_FILE_URI);
 
         updateUI(mAuth.getCurrentUser());
+        hideProgressDialog();
     }
 
     private void updateUI(FirebaseUser user) {
@@ -273,19 +289,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ad.show();
     }
 
-    private void showProgressDialog() {
+    private void showProgressDialog(String caption) {
         if (mProgressDialog == null) {
             mProgressDialog = new ProgressDialog(this);
-            mProgressDialog.setMessage("Loading...");
-            mProgressDialog.setIndeterminate(true);
+            mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         }
 
+        mProgressDialog.setProgress(0);
+        mProgressDialog.setMax(0);
+        mProgressDialog.setMessage(caption);
         mProgressDialog.show();
     }
 
     private void hideProgressDialog() {
         if (mProgressDialog != null && mProgressDialog.isShowing()) {
             mProgressDialog.dismiss();
+        }
+    }
+
+    private void updateProgressDialog(int completedCount, int totalCount) {
+        if (mProgressDialog != null) {
+            mProgressDialog.setMax(totalCount);
+            mProgressDialog.setProgress(completedCount);
         }
     }
 
