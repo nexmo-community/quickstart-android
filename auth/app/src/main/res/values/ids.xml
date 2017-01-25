@@ -1,16 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="nexmo_application_id">NEXMO-APPLICATION-ID</string>
+    <string name="nexmo_shared_secret">NEXMO-SHARED-SECRET</string>
 
-    <!--
-        Your Facebook App ID. See README.
-    -->
-    <!--  TODO(developer): REPLACE -->
-    <string name="facebook_app_id">REPLACE_ME</string>
-
-    <!--
-      Your Twitter Key and Secret, see README.
-    -->
-    <!-- TODO(developer): REPLACE -->
-    <string name="twitter_consumer_key">REPLACE_ME</string>
-    <string name="twitter_consumer_secret">REPLACE_ME</string>
+    <string name="twitter_consumer_key">TWITTER-CONSUMER-KEY</string>
+    <string name="twitter_consumer_secret">TWITTER-CONSUMER-SECRET</string>
 </resources>

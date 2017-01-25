@@ -93,6 +93,9 @@ public class EmailPasswordActivity extends BaseActivity implements
     @Override
     public void onStart() {
         super.onStart();
+        if (verified) {
+            signIn(mEmailField.getText().toString(), mPasswordField.getText().toString());
+        }
         mAuth.addAuthStateListener(mAuthListener);
     }
     // [END on_start_add_listener]
@@ -101,6 +104,8 @@ public class EmailPasswordActivity extends BaseActivity implements
     @Override
     public void onStop() {
         super.onStop();
+        verified = false;
+        mAuth.signOut();
         if (mAuthListener != null) {
             mAuth.removeAuthStateListener(mAuthListener);
         }
@@ -175,6 +180,7 @@ public class EmailPasswordActivity extends BaseActivity implements
 
     private void signOut() {
         mAuth.signOut();
+        verified = false;
         updateUI(null);
     }
 
@@ -225,7 +231,8 @@ public class EmailPasswordActivity extends BaseActivity implements
         if (i == R.id.email_create_account_button) {
             createAccount(mEmailField.getText().toString(), mPasswordField.getText().toString());
         } else if (i == R.id.email_sign_in_button) {
-            signIn(mEmailField.getText().toString(), mPasswordField.getText().toString());
+            twoFactorApp.getVerifyClient(verified).getVerifiedUserFromDefaultManagedUI();
+            addVerificationListener();
         } else if (i == R.id.sign_out_button) {
             signOut();
         }

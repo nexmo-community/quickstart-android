@@ -94,6 +94,9 @@ public class AnonymousAuthActivity extends BaseActivity implements
     @Override
     public void onStart() {
         super.onStart();
+        if (verified) {
+            signInAnonymously();
+        }
         mAuth.addAuthStateListener(mAuthListener);
     }
     // [END on_start_add_listener]
@@ -102,6 +105,8 @@ public class AnonymousAuthActivity extends BaseActivity implements
     @Override
     public void onStop() {
         super.onStop();
+        mAuth.signOut();
+        verified = false;
         if (mAuthListener != null) {
             mAuth.removeAuthStateListener(mAuthListener);
         }
@@ -136,6 +141,7 @@ public class AnonymousAuthActivity extends BaseActivity implements
 
     private void signOut() {
         mAuth.signOut();
+        verified = false;
         updateUI(null);
     }
 
@@ -225,7 +231,8 @@ public class AnonymousAuthActivity extends BaseActivity implements
     public void onClick(View v) {
         int i = v.getId();
         if (i == R.id.button_anonymous_sign_in) {
-            signInAnonymously();
+            twoFactorApp.getVerifyClient(verified).getVerifiedUserFromDefaultManagedUI();
+            addVerificationListener();
         } else if (i == R.id.button_anonymous_sign_out) {
             signOut();
         } else if (i == R.id.button_link_account) {

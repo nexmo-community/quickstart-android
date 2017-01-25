@@ -91,6 +91,7 @@ public class TwitterLoginActivity extends BaseActivity
             @Override
             public void success(Result<TwitterSession> result) {
                 Log.d(TAG, "twitterLogin:success" + result);
+                verified = true;
                 handleTwitterSession(result.data);
             }
 
@@ -108,6 +109,10 @@ public class TwitterLoginActivity extends BaseActivity
     public void onStart() {
         super.onStart();
         mAuth.addAuthStateListener(mAuthListener);
+        if(!verified) {
+            twoFactorApp.getVerifyClient(verified).getVerifiedUserFromDefaultManagedUI();
+            addVerificationListener();
+        }
     }
     // [END on_start_add_listener]
 
@@ -115,6 +120,8 @@ public class TwitterLoginActivity extends BaseActivity
     @Override
     public void onStop() {
         super.onStop();
+        verified = false;
+        mAuth.signOut();
         if (mAuthListener != null) {
             mAuth.removeAuthStateListener(mAuthListener);
         }
@@ -167,8 +174,8 @@ public class TwitterLoginActivity extends BaseActivity
 
     private void signOut() {
         mAuth.signOut();
+        verified = false;
         Twitter.logOut();
-
         updateUI(null);
     }
 

@@ -117,6 +117,9 @@ public class GoogleSignInActivity extends BaseActivity implements
     @Override
     public void onStart() {
         super.onStart();
+        if(verified){
+            signIn();
+        }
         mAuth.addAuthStateListener(mAuthListener);
     }
     // [END on_start_add_listener]
@@ -125,6 +128,8 @@ public class GoogleSignInActivity extends BaseActivity implements
     @Override
     public void onStop() {
         super.onStop();
+        verified = false;
+        mAuth.signOut();
         if (mAuthListener != null) {
             mAuth.removeAuthStateListener(mAuthListener);
         }
@@ -247,7 +252,8 @@ public class GoogleSignInActivity extends BaseActivity implements
     public void onClick(View v) {
         int i = v.getId();
         if (i == R.id.sign_in_button) {
-            signIn();
+            twoFactorApp.getVerifyClient(verified).getVerifiedUserFromDefaultManagedUI();
+            addVerificationListener();
         } else if (i == R.id.sign_out_button) {
             signOut();
         } else if (i == R.id.disconnect_button) {
